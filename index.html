@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPTOND-2025 Dataset | 中国公共交通网络数据集</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .language-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .doi-section {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .doi-section a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .stat-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .section-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .map-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .city-select {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .city-select:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .transport-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .transport-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .transport-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .transport-btn.active {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .transport-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .layer-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .layer-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.9em;
+            flex: 1;
+        }
+
+        .layer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .layer-btn.active {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .basemap-select {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .basemap-select:hover {
+            border-color: #4CAF50;
+        }
+
+        .map-container {
+            height: 600px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .data-info-panel {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .data-attributes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .attribute-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .download-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            margin: 0 10px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: white;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 1.5em;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #ffd700;
+        }
+
+        .error-message {
+            background: rgba(255, 193, 7, 0.1);
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #856404;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stat-number {
+                font-size: 2em;
+            }
+            
+            .section-title {
+                font-size: 1.5em;
+            }
+
+            .map-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .transport-buttons {
+                flex-direction: column;
+            }
+
+            .layer-buttons {
+                flex-direction: column;
+            }
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 语言切换器 -->
+    <div class="language-switcher">
+        <button class="lang-btn active" data-lang="zh">中文</button>
+        <button class="lang-btn" data-lang="en">English</button>
+    </div>
+
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1><i class="fas fa-bus"></i> <span data-key="title">CPTOND-2025 中国公共交通网络数据集</span></h1>
+            <p data-key="subtitle">China Public Transport Open Network Dataset - 2025</p>
+            <div class="badges">
+                <span class="badge"><i class="fas fa-map"></i> <span data-key="badge-geojson">GeoJSON格式</span></span>
+                <span class="badge"><i class="fas fa-city"></i> <span data-key="badge-cities">多城市覆盖</span></span>
+                <span class="badge"><i class="fas fa-globe"></i> <span data-key="badge-coordinate">WGS84坐标系</span></span>
+                <span class="badge"><i class="fas fa-subway"></i> <span data-key="badge-transport">公交地铁</span></span>
+            </div>
+            <div class="doi-section">
+                <i class="fas fa-link"></i> 
+                <strong>DOI:</strong> 
+                <a href="https://figshare.com/articles/dataset/CPTOND-2025/29377427" target="_blank">
+                    10.6084/m9.figshare.29377427
+                </a>
+            </div>
+        </div>
+
+        <!-- 统计数据 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-city"></i></div>
+                <div class="stat-number" id="cityCount">30+</div>
+                <div class="stat-label" data-key="stat-cities">覆盖城市</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="stat-number" id="stopsCount">50K+</div>
+                <div class="stat-label" data-key="stat-stops">交通站点</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-route"></i></div>
+                <div class="stat-number" id="routesCount">5K+</div>
+                <div class="stat-label" data-key="stat-routes">交通线路</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-database"></i></div>
+                <div class="stat-number">2.8GB</div>
+                <div class="stat-label" data-key="stat-size">数据大小</div>
+            </div>
+        </div>
+
+        <!-- 在线地图预览 -->
+        <div class="content-section">
+            <h2 class="section-title">
+                <i class="fas fa-map"></i>
+                <span data-key="preview-title">在线数据预览</span>
+            </h2>
+            
+            <div class="map-controls">
+                <div class="control-group">
+                    <label data-key="select-city">选择城市</label>
+                    <select class="city-select" id="citySelect">
+                        <option value="">-- 选择城市 --</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label data-key="transport-type">交通类型</label>
+                    <div class="transport-buttons">
+                        <button class="transport-btn active" data-transport="bus">
+                            <i class="fas fa-bus"></i> <span data-key="btn-bus">公交</span>
+                        </button>
+                        <button class="transport-btn" data-transport="metro">
+                            <i class="fas fa-subway"></i> <span data-key="btn-subway">地铁</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label data-key="layer-type">图层显示</label>
+                    <div class="layer-buttons">
+                        <button class="layer-btn active" data-layer="stops">
+                            <i class="fas fa-map-marker-alt"></i> <span data-key="btn-stops">站点</span>
+                        </button>
+                        <button class="layer-btn" data-layer="routes">
+                            <i class="fas fa-route"></i> <span data-key="btn-routes">线路</span>
+                        </button>
+                        <button class="layer-btn" data-layer="both">
+                            <i class="fas fa-layer-group"></i> <span data-key="btn-both">叠加</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label data-key="basemap-type">底图样式</label>
+                    <select class="basemap-select" id="basemapSelect">
+                        <option value="osm">OpenStreetMap</option>
+                        <option value="satellite">卫星图</option>
+                        <option value="terrain">地形图</option>
+                        <option value="dark">暗色主题</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="map-container" style="position: relative;">
+                <div id="map"></div>
+                <div class="loading-indicator" id="loadingIndicator">
+                    <i class="fas fa-spinner fa-spin"></i> 
+                    <span data-key="loading">加载中...</span>
+                </div>
+            </div>
+
+            <div class="data-info-panel" id="dataInfo">
+                <h3><i class="fas fa-info-circle"></i> <span data-key="data-attributes">数据属性信息</span></h3>
+                <div class="data-attributes" id="dataAttributes">
+                    <!-- 属性信息将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据说明 -->
+        <div class="content-section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                <span data-key="dataset-info-title">数据集说明</span>
+            </h2>
+            
+            <div data-key="dataset-description">
+                <p>CPTOND-2025是一个全面的中国公共交通网络开放数据集，包含全国30多个主要城市的公交和地铁系统地理信息数据。数据集采用标准的GeoJSON格式，支持在各种GIS软件和编程环境中使用。</p>
+                
+                <h3>数据特点：</h3>
+                <ul>
+                    <li><strong>高精度地理坐标：</strong>采用WGS84坐标系，精度达到米级</li>
+                    <li><strong>丰富的属性信息：</strong>包含站点名称、线路信息、运营状态等详细属性</li>
+                    <li><strong>标准化格式：</strong>统一的GeoJSON数据结构和命名规范</li>
+                    <li><strong>多交通方式：</strong>涵盖公交和地铁两种主要城市交通方式</li>
+                    <li><strong>定期更新：</strong>基于2025年最新的公共交通网络数据</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 下载部分 -->
+        <div class="download-section">
+            <a href="https://figshare.com/articles/dataset/CPTOND-2025/29377427?file=56306825" class="download-btn" target="_blank">
+                <i class="fas fa-download"></i> <span data-key="download-dataset">下载完整数据集</span>
+            </a>
+            <a href="https://figshare.com/articles/dataset/CPTOND-2025/29377427" class="download-btn" target="_blank">
+                <i class="fas fa-external-link-alt"></i> <span data-key="view-figshare">查看Figshare页面</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <div class="footer">
+        <p>&copy; 2025 CPTOND-2025 <span data-key="footer-project">数据集项目</span></p>
+        <div style="margin-top: 15px;">
+            <a href="https://figshare.com/articles/dataset/CPTOND-2025/29377427" title="Figshare">
+                <i class="fas fa-database"></i>
+            </a>
+            <a href="mailto:contact@example.com" title="Email">
+                <i class="fas fa-envelope"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // 多语言配置
+        const translations = {
+            zh: {
+                'title': 'CPTOND-2025 中国公共交通网络数据集',
+                'subtitle': 'China Public Transport Open Network Dataset - 2025',
+                'badge-geojson': 'GeoJSON格式',
+                'badge-cities': '多城市覆盖',
+                'badge-coordinate': 'WGS84坐标系',
+                'badge-transport': '公交地铁',
+                'stat-cities': '覆盖城市',
+                'stat-stops': '交通站点',
+                'stat-routes': '交通线路',
+                'stat-size': '数据大小',
+                'preview-title': '在线数据预览',
+                'select-city': '选择城市',
+                'transport-type': '交通类型',
+                'layer-type': '图层显示',
+                'basemap-type': '底图样式',
+                'btn-bus': '公交',
+                'btn-subway': '地铁',
+                'btn-stops': '站点',
+                'btn-routes': '线路',
+                'btn-both': '叠加',
+                'loading': '加载中...',
+                'data-attributes': '数据属性信息',
+                'dataset-info-title': '数据集说明',
+                'dataset-description': `
+                    <p>CPTOND-2025是一个全面的中国公共交通网络开放数据集，包含全国30多个主要城市的公交和地铁系统地理信息数据。数据集采用标准的GeoJSON格式，支持在各种GIS软件和编程环境中使用。</p>
+                    
+                    <h3>数据特点：</h3>
+                    <ul>
+                        <li><strong>高精度地理坐标：</strong>采用WGS84坐标系，精度达到米级</li>
+                        <li><strong>丰富的属性信息：</strong>包含站点名称、线路信息、运营状态等详细属性</li>
+                        <li><strong>标准化格式：</strong>统一的GeoJSON数据结构和命名规范</li>
+                        <li><strong>多交通方式：</strong>涵盖公交和地铁两种主要城市交通方式</li>
+                        <li><strong>定期更新：</strong>基于2025年最新的公共交通网络数据</li>
+                    </ul>
+                `,
+                'download-dataset': '下载完整数据集',
+                'view-figshare': '查看Figshare页面',
+                'footer-project': '数据集项目'
+            },
+            en: {
+                'title': 'CPTOND-2025 China Public Transport Network Dataset',
+                'subtitle': 'Open Geographic Dataset for Chinese Urban Transit Systems',
+                'badge-geojson': 'GeoJSON Format',
+                'badge-cities': 'Multi-city Coverage',
+                'badge-coordinate': 'WGS84 Coordinate',
+                'badge-transport': 'Bus & Metro',
+                'stat-cities': 'Cities Covered',
+                'stat-stops': 'Transit Stops',
+                'stat-routes': 'Transit Routes',
+                'stat-size': 'Dataset Size',
+                'preview-title': 'Online Data Preview',
+                'select-city': 'Select City',
+                'transport-type': 'Transport Type',
+                'layer-type': 'Layer Display',
+                'basemap-type': 'Basemap Style',
+                'btn-bus': 'Bus',
+                'btn-subway': 'Metro',
+                'btn-stops': 'Stops',
+                'btn-routes': 'Routes',
+                'btn-both': 'Overlay',
+                'loading': 'Loading...',
+                'data-attributes': 'Data Attributes',
+                'dataset-info-title': 'Dataset Information',
+                'dataset-description': `
+                    <p>CPTOND-2025 is a comprehensive open dataset of China's public transport networks, containing geographic information for bus and metro systems across 30+ major Chinese cities. The dataset uses standard GeoJSON format, compatible with various GIS software and programming environments.</p>
+                    
+                    <h3>Key Features:</h3>
+                    <ul>
+                        <li><strong>High-precision Coordinates:</strong> WGS84 coordinate system with meter-level accuracy</li>
+                        <li><strong>Rich Attribute Data:</strong> Includes stop names, route information, operational status, and more</li>
+                        <li><strong>Standardized Format:</strong> Unified GeoJSON data structure and naming conventions</li>
+                        <li><strong>Multiple Transport Modes:</strong> Covers both bus and metro urban transit systems</li>
+                        <li><strong>Regular Updates:</strong> Based on the latest 2025 public transport network data</li>
+                    </ul>
+                `,
+                'download-dataset': 'Download Full Dataset',
+                'view-figshare': 'View Figshare Page',
+                'footer-project': 'Dataset Project'
+            }
+        };
+
+        // 城市数据配置 - 基于你提供的实际文件列表
+        const cities = {
+            luzhou: { name: '泸州', name_en: 'Luzhou', lat: 28.8719, lng: 105.4429, zoom: 11 },
+            zhenjiang: { name: '镇江', name_en: 'Zhenjiang', lat: 32.2044, lng: 119.4515, zoom: 11 },
+            macau: { name: '澳门', name_en: 'Macau', lat: 22.1987, lng: 113.5439, zoom: 12 },
+            zhongshan: { name: '中山', name_en: 'Zhongshan', lat: 22.5177, lng: 113.3826, zoom: 11 },
+            mannings: { name: '万宁', name_en: 'Mannings', lat: 18.7964, lng: 110.3889, zoom: 11 },
+            matsubara: { name: '松原', name_en: 'Matsubara', lat: 45.1182, lng: 124.8254, zoom: 11 },
+            meizhou: { name: '梅州', name_en: 'Meizhou', lat: 24.1913, lng: 116.1175, zoom: 11 },
+            mesa: { name: '梅萨', name_en: 'Mesa', lat: 33.4152, lng: -111.8315, zoom: 11 },
+            mianyang: { name: '绵阳', name_en: 'Mianyang', lat: 31.4637, lng: 104.6792, zoom: 11 },
+            mudanjiang: { name: '牡丹江', name_en: 'Mudanjiang', lat: 44.5553, lng: 129.6333, zoom: 11 },
+            nanking: { name: '南京', name_en: 'Nanking', lat: 32.0603, lng: 118.7969, zoom: 10 },
+            nanning: { name: '南宁', name_en: 'Nanning', lat: 22.8167, lng: 108.3669, zoom: 10 },
+            zhoushan: { name: '舟山', name_en: 'Zhoushan', lat: 29.9853, lng: 122.2072, zoom: 11 },
+            zhuhai: { name: '珠海', name_en: 'Zhuhai', lat: 22.2711, lng: 113.5767, zoom: 11 },
+            zhumadian: { name: '驻马店', name_en: 'Zhumadian', lat: 32.9804, lng: 114.0225, zoom: 11 },
+            zhuzhou: { name: '株洲', name_en: 'Zhuzhou', lat: 27.8274, lng: 113.1336, zoom: 11 },
+            zigong: { name: '自贡', name_en: 'Zigong', lat: 29.3399, lng: 104.7784, zoom: 11 },
+            ziyang: { name: '资阳', name_en: 'Ziyang', lat: 30.1281, lng: 104.6414, zoom: 11 },
+            zunyi: { name: '遵义', name_en: 'Zunyi', lat: 27.7251, lng: 106.9271, zoom: 11 }
+        };
+
+        // 底图配置
+        const basemaps = {
+            osm: {
+                url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                attribution: '© OpenStreetMap contributors'
+            },
+            satellite: {
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                attribution: '© Esri, Maxar, GeoEye, Earthstar Geographics'
+            },
+            terrain: {
+                url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+                attribution: '© OpenTopoMap contributors'
+            },
+            dark: {
+                url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+                attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors'
+            }
+        };
+
+        // 全局变量
+        let map;
+        let currentLang = 'zh';
+        let currentCity = '';
+        let currentTransport = 'bus';
+        let currentLayer = 'stops';
+        let currentBasemap = 'osm';
+        let stopsLayer, routesLayer;
+        let basemapLayer;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeLanguage();
+            initializeMap();
+            initializeCitySelect();
+            initializeControls();
+            animateStats();
+        });
+
+        function initializeLanguage() {
+            const langButtons = document.querySelectorAll('.lang-btn');
+            langButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    langButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentLang = btn.dataset.lang;
+                    updateLanguage();
+                    updateCitySelect();
+                    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+                });
+            });
+        }
+
+        function updateLanguage() {
+            const elements = document.querySelectorAll('[data-key]');
+            elements.forEach(element => {
+                const key = element.dataset.key;
+                if (translations[currentLang][key]) {
+                    if (key === 'dataset-description') {
+                        element.innerHTML = translations[currentLang][key];
+                    } else {
+                        element.textContent = translations[currentLang][key];
+                    }
+                }
+            });
+        }
+
+        function initializeMap() {
+            map = L.map('map').setView([35.0, 105.0], 5);
+            
+            // 初始化底图
+            basemapLayer = L.tileLayer(basemaps[currentBasemap].url, {
+                attribution: basemaps[currentBasemap].attribution
+            }).addTo(map);
+
+            // 初始化图层
+            stopsLayer = L.layerGroup();
+            routesLayer = L.layerGroup();
+        }
+
+        function initializeCitySelect() {
+            const citySelect = document.getElementById('citySelect');
+            citySelect.innerHTML = '<option value="">-- ' + (currentLang === 'zh' ? '选择城市' : 'Select City') + ' --</option>';
+            
+            Object.keys(cities).forEach(cityKey => {
+                const city = cities[cityKey];
+                const option = document.createElement('option');
+                option.value = cityKey;
+                option.textContent = currentLang === 'zh' ? city.name : city.name_en;
+                citySelect.appendChild(option);
+            });
+
+            citySelect.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    currentCity = e.target.value;
+                    switchCity(currentCity);
+                } else {
+                    clearData();
+                }
+            });
+        }
+
+        function updateCitySelect() {
+            const citySelect = document.getElementById('citySelect');
+            const selectedValue = citySelect.value;
+            citySelect.innerHTML = '<option value="">-- ' + (currentLang === 'zh' ? '选择城市' : 'Select City') + ' --</option>';
+            
+            Object.keys(cities).forEach(cityKey => {
+                const city = cities[cityKey];
+                const option = document.createElement('option');
+                option.value = cityKey;
+                option.textContent = currentLang === 'zh' ? city.name : city.name_en;
+                if (cityKey === selectedValue) option.selected = true;
+                citySelect.appendChild(option);
+            });
+        }
+
+        function initializeControls() {
+            // 交通类型按钮
+            const transportButtons = document.querySelectorAll('.transport-btn');
+            transportButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    transportButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentTransport = btn.dataset.transport;
+                    if (currentCity) {
+                        loadCityData(currentCity);
+                    }
+                });
+            });
+
+            // 图层显示按钮
+            const layerButtons = document.querySelectorAll('.layer-btn');
+            layerButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    layerButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentLayer = btn.dataset.layer;
+                    updateMapLayers();
+                });
+            });
+
+            // 底图选择
+            const basemapSelect = document.getElementById('basemapSelect');
+            basemapSelect.addEventListener('change', (e) => {
+                currentBasemap = e.target.value;
+                updateBasemap();
+            });
+        }
+
+        function switchCity(cityKey) {
+            const city = cities[cityKey];
+            map.setView([city.lat, city.lng], city.zoom);
+            loadCityData(cityKey);
+        }
+
+        function clearData() {
+            stopsLayer.clearLayers();
+            routesLayer.clearLayers();
+            updateMapLayers();
+            updateDataAttributes(null);
+            updateTransportButtons(null);
+        }
+
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        async function loadCityData(cityKey) {
+            showLoading();
+            
+            try {
+                // 清除现有数据
+                stopsLayer.clearLayers();
+                routesLayer.clearLayers();
+                
+                // 构建文件路径
+                const stopsPath = `../website/data/geojson/${cityKey}_${currentTransport}_stops.geojson`;
+                const routesPath = `../website/data/geojson/${cityKey}_${currentTransport}_routes.geojson`;
+                
+                let hasStops = false, hasRoutes = false;
+                
+                // 加载站点数据
+                try {
+                    const stopsResponse = await fetch(stopsPath);
+                    if (stopsResponse.ok) {
+                        const stopsData = await stopsResponse.json();
+                        if (stopsData && stopsData.features && stopsData.features.length > 0) {
+                            loadStopsLayer(stopsData);
+                            hasStops = true;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`站点数据加载失败: ${error.message}`);
+                }
+                
+                // 加载线路数据
+                try {
+                    const routesResponse = await fetch(routesPath);
+                    if (routesResponse.ok) {
+                        const routesData = await routesResponse.json();
+                        if (routesData && routesData.features && routesData.features.length > 0) {
+                            loadRoutesLayer(routesData);
+                            hasRoutes = true;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`线路数据加载失败: ${error.message}`);
+                }
+                
+                // 如果没有找到真实数据，生成示例数据
+                if (!hasStops && !hasRoutes) {
+                    generateSampleData(cities[cityKey]);
+                }
+                
+                updateMapLayers();
+                updateDataAttributes(cityKey);
+                updateTransportButtons(cityKey);
+                
+            } catch (error) {
+                console.error('数据加载失败:', error);
+                // 显示示例数据
+                generateSampleData(cities[cityKey]);
+                updateMapLayers();
+                updateDataAttributes(cityKey);
+            }
+            
+            hideLoading();
+        }
+
+        async function updateTransportButtons(cityKey) {
+            const busBtn = document.querySelector('[data-transport="bus"]');
+            const metroBtn = document.querySelector('[data-transport="metro"]');
+            
+            if (!cityKey) {
+                busBtn.disabled = false;
+                metroBtn.disabled = false;
+                return;
+            }
+            
+            // 检查是否有地铁数据
+            const metroStopsPath = `../website/data/geojson/${cityKey}_metro_stops.geojson`;
+            try {
+                const response = await fetch(metroStopsPath);
+                metroBtn.disabled = !response.ok;
+            } catch {
+                metroBtn.disabled = true;
+            }
+        }
+
+        function loadStopsLayer(geojsonData) {
+            const stopsIcon = currentTransport === 'bus' ? 'fa-bus' : 'fa-subway';
+            const stopsColor = currentTransport === 'bus' ? '#ff7800' : '#0066cc';
+            
+            L.geoJSON(geojsonData, {
+                pointToLayer: function (feature, latlng) {
+                    return L.circleMarker(latlng, {
+                        radius: 6,
+                        fillColor: stopsColor,
+                        color: '#000',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+                },
+                onEachFeature: function (feature, layer) {
+                    const props = feature.properties;
+                    const stopName = props.name || props.STOP_NAME || props.stop_name || '未知站点';
+                    const stopType = currentTransport === 'bus' ? '公交站点' : '地铁站点';
+                    const coords = feature.geometry.coordinates;
+                    
+                    layer.bindPopup(`
+                        <strong><i class="fas ${stopsIcon}"></i> ${stopName}</strong><br>
+                        ${currentLang === 'zh' ? '坐标' : 'Coordinates'}: ${coords[1].toFixed(6)}, ${coords[0].toFixed(6)}<br>
+                        ${currentLang === 'zh' ? '类型' : 'Type'}: ${currentLang === 'zh' ? stopType : (currentTransport === 'bus' ? 'Bus Stop' : 'Metro Station')}
+                    `);
+                }
+            }).addTo(stopsLayer);
+        }
+
+        function loadRoutesLayer(geojsonData) {
+            const routeColor = currentTransport === 'bus' ? '#3388ff' : '#ff6600';
+            
+            L.geoJSON(geojsonData, {
+                style: function(feature) {
+                    return {
+                        color: routeColor,
+                        weight: 3,
+                        opacity: 0.7
+                    };
+                },
+                onEachFeature: function (feature, layer) {
+                    const props = feature.properties;
+                    const routeName = props.name || props.ROUTE_NAME || props.route_name || '未知线路';
+                    const routeType = currentTransport === 'bus' ? '公交线路' : '地铁线路';
+                    
+                    layer.bindPopup(`
+                        <strong>${routeName}</strong><br>
+                        ${currentLang === 'zh' ? '类型' : 'Type'}: ${currentLang === 'zh' ? routeType : (currentTransport === 'bus' ? 'Bus Route' : 'Metro Line')}
+                    `);
+                }
+            }).addTo(routesLayer);
+        }
+
+        function generateSampleStops(city) {
+            const stopsIcon = currentTransport === 'bus' ? 'fa-bus' : 'fa-subway';
+            const stopsColor = currentTransport === 'bus' ? '#ff7800' : '#0066cc';
+            
+            for (let i = 0; i < 20; i++) {
+                const lat = city.lat + (Math.random() - 0.5) * 0.1;
+                const lng = city.lng + (Math.random() - 0.5) * 0.1;
+                
+                const marker = L.circleMarker([lat, lng], {
+                    radius: 6,
+                    fillColor: stopsColor,
+                    color: '#000',
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+                
+                const cityName = currentLang === 'zh' ? city.name : city.name_en;
+                const stopType = currentTransport === 'bus' ? 
+                    (currentLang === 'zh' ? '公交站点' : 'Bus Stop') : 
+                    (currentLang === 'zh' ? '地铁站点' : 'Metro Station');
+                const stopName = `${cityName}${currentLang === 'zh' ? '站点' : ' Stop'}${i+1}`;
+                
+                marker.bindPopup(`
+                    <strong><i class="fas ${stopsIcon}"></i> ${stopName}</strong><br>
+                    ${currentLang === 'zh' ? '坐标' : 'Coordinates'}: ${lat.toFixed(6)}, ${lng.toFixed(6)}<br>
+                    ${currentLang === 'zh' ? '类型' : 'Type'}: ${stopType}<br>
+                    <em>${currentLang === 'zh' ? '示例数据' : 'Sample Data'}</em>
+                `);
+                
+                stopsLayer.addLayer(marker);
+            }
+        }
+
+        function generateSampleRoutes(city) {
+            const routeColor = currentTransport === 'bus' ? '#3388ff' : '#ff6600';
+            
+            for (let i = 0; i < 5; i++) {
+                const points = [];
+                const baseLatLng = [city.lat + (Math.random() - 0.5) * 0.08, 
+                                  city.lng + (Math.random() - 0.5) * 0.08];
+                
+                for (let j = 0; j < 10; j++) {
+                    points.push([
+                        baseLatLng[0] + (j * 0.01) + (Math.random() - 0.5) * 0.005,
+                        baseLatLng[1] + (j * 0.01) + (Math.random() - 0.5) * 0.005
+                    ]);
+                }
+                
+                const polyline = L.polyline(points, {
+                    color: routeColor,
+                    weight: 3,
+                    opacity: 0.7
+                });
+                
+                const cityName = currentLang === 'zh' ? city.name : city.name_en;
+                const routeType = currentTransport === 'bus' ? 
+                    (currentLang === 'zh' ? '公交线路' : 'Bus Route') : 
+                    (currentLang === 'zh' ? '地铁线路' : 'Metro Line');
+                const routeName = currentTransport === 'bus' ? 
+                    `${cityName}${i+1}${currentLang === 'zh' ? '路' : ' Route'}` :
+                    `${currentLang === 'zh' ? '地铁' : 'Metro'}${i+1}${currentLang === 'zh' ? '号线' : ' Line'}`;
+                
+                polyline.bindPopup(`
+                    <strong>${routeName}</strong><br>
+                    ${currentLang === 'zh' ? '类型' : 'Type'}: ${routeType}<br>
+                    <em>${currentLang === 'zh' ? '示例数据' : 'Sample Data'}</em>
+                `);
+                
+                routesLayer.addLayer(polyline);
+            }
+        }
+
+        function generateSampleData(city) {
+            generateSampleStops(city);
+            generateSampleRoutes(city);
+            
+            // 显示示例数据警告
+            const dataInfo = document.getElementById('dataInfo');
+            const warningMsg = document.createElement('div');
+            warningMsg.className = 'error-message';
+            warningMsg.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i> 
+                ${currentLang === 'zh' ? 
+                '当前显示的是示例数据。实际GeoJSON文件未找到，请检查数据文件路径。' : 
+                'Currently showing sample data. Actual GeoJSON files not found, please check data file paths.'}
+            `;
+            dataInfo.insertBefore(warningMsg, dataInfo.firstChild);
+        }
+
+        function updateMapLayers() {
+            // 清除所有图层
+            map.removeLayer(stopsLayer);
+            map.removeLayer(routesLayer);
+            
+            // 根据选择添加图层
+            switch(currentLayer) {
+                case 'stops':
+                    map.addLayer(stopsLayer);
+                    break;
+                case 'routes':
+                    map.addLayer(routesLayer);
+                    break;
+                case 'both':
+                    map.addLayer(routesLayer);
+                    map.addLayer(stopsLayer);
+                    break;
+            }
+        }
+
+        function updateBasemap() {
+            map.removeLayer(basemapLayer);
+            basemapLayer = L.tileLayer(basemaps[currentBasemap].url, {
+                attribution: basemaps[currentBasemap].attribution
+            }).addTo(map);
+        }
+
+        function updateDataAttributes(cityKey) {
+            const dataAttributes = document.getElementById('dataAttributes');
+            // 清除警告消息
+            const warnings = document.querySelectorAll('.error-message');
+            warnings.forEach(warning => warning.remove());
+            
+            if (!cityKey) {
+                dataAttributes.innerHTML = '<div class="attribute-item">' + 
+                    (currentLang === 'zh' ? '请选择城市查看数据属性' : 'Please select a city to view data attributes') + 
+                    '</div>';
+                return;
+            }
+            
+            const city = cities[cityKey];
+            const transportType = currentTransport === 'bus' ? 
+                (currentLang === 'zh' ? '公交' : 'Bus') : 
+                (currentLang === 'zh' ? '地铁' : 'Metro');
+            
+            const attributes = currentLang === 'zh' ? [
+                { name: 'STOP_ID', desc: '站点唯一标识符' },
+                { name: 'STOP_NAME', desc: '站点名称' },
+                { name: 'LONGITUDE', desc: '经度坐标' },
+                { name: 'LATITUDE', desc: '纬度坐标' },
+                { name: 'ROUTE_ID', desc: '所属线路ID' },
+                { name: 'CITY_CODE', desc: '城市编码' },
+                { name: 'TRANSPORT_TYPE', desc: '交通方式' }
+            ] : [
+                { name: 'STOP_ID', desc: 'Unique stop identifier' },
+                { name: 'STOP_NAME', desc: 'Stop name' },
+                { name: 'LONGITUDE', desc: 'Longitude coordinate' },
+                { name: 'LATITUDE', desc: 'Latitude coordinate' },
+                { name: 'ROUTE_ID', desc: 'Associated route ID' },
+                { name: 'CITY_CODE', desc: 'City code' },
+                { name: 'TRANSPORT_TYPE', desc: 'Transport type' }
+            ];
+            
+            dataAttributes.innerHTML = attributes.map(attr => 
+                `<div class="attribute-item">
+                    <strong>${attr.name}:</strong> ${attr.desc}
+                </div>`
+            ).join('') + 
+            `<div class="attribute-item">
+                <strong>${currentLang === 'zh' ? '当前数据' : 'Current Data'}:</strong> ${currentLang === 'zh' ? city.name : city.name_en} - ${transportType}
+            </div>` + 
+            `<div class="attribute-item">
+                <strong>${currentLang === 'zh' ? '文件路径' : 'File Path'}:</strong> ../website/data/geojson/${cityKey}_${currentTransport}_*.geojson
+            </div>`;
+        }
+
+        function animateStats() {
+            setTimeout(() => {
+                animateNumber(document.getElementById('cityCount'), Object.keys(cities).length);
+                animateNumber(document.getElementById('stopsCount'), 50000);
+                animateNumber(document.getElementById('routesCount'), 5200);
+            }, 500);
+        }
+
+        function animateNumber(element, target, duration = 2000) {
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                
+                let displayValue;
+                if (target >= 1000) {
+                    displayValue = Math.floor(current / 1000) + 'K+';
+                } else {
+                    displayValue = Math.floor(current) + '+';
+                }
+                element.textContent = displayValue;
+            }, 16);
+        }
+    </script>
+</body>
+</html>
