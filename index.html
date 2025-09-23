@@ -602,6 +602,9 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
+        // 服务器配置 - 修改为你的服务器地址
+        const SERVER_BASE_URL = 'http://8.147.232.2/geojson/';
+
         // 多语言配置
         const translations = {
             zh: {
@@ -688,6 +691,8 @@
 
         // 城市数据配置 - 基于你提供的实际文件列表
         const cities = {
+            // 添加更多城市，你需要根据你的实际geojson文件来填充这个列表
+            chengdu: { name: '成都', name_en: 'Chengdu', lat: 30.5728, lng: 104.0668, zoom: 10 },
             luzhou: { name: '泸州', name_en: 'Luzhou', lat: 28.8719, lng: 105.4429, zoom: 11 },
             zhenjiang: { name: '镇江', name_en: 'Zhenjiang', lat: 32.2044, lng: 119.4515, zoom: 11 },
             macau: { name: '澳门', name_en: 'Macau', lat: 22.1987, lng: 113.5439, zoom: 12 },
@@ -889,9 +894,9 @@
                 stopsLayer.clearLayers();
                 routesLayer.clearLayers();
                 
-                // 构建文件路径
-                const stopsPath = `../website/data/geojson/${cityKey}_${currentTransport}_stops.geojson`;
-                const routesPath = `../website/data/geojson/${cityKey}_${currentTransport}_routes.geojson`;
+                // 构建文件路径 - 使用服务器URL
+                const stopsPath = `${SERVER_BASE_URL}${cityKey}_${currentTransport}_stops.geojson`;
+                const routesPath = `${SERVER_BASE_URL}${cityKey}_${currentTransport}_routes.geojson`;
                 
                 let hasStops = false, hasRoutes = false;
                 
@@ -954,7 +959,7 @@
             }
             
             // 检查是否有地铁数据
-            const metroStopsPath = `../website/data/geojson/${cityKey}_metro_stops.geojson`;
+            const metroStopsPath = `${SERVER_BASE_URL}${cityKey}_metro_stops.geojson`;
             try {
                 const response = await fetch(metroStopsPath);
                 metroBtn.disabled = !response.ok;
@@ -1179,7 +1184,7 @@
                 <strong>${currentLang === 'zh' ? '当前数据' : 'Current Data'}:</strong> ${currentLang === 'zh' ? city.name : city.name_en} - ${transportType}
             </div>` + 
             `<div class="attribute-item">
-                <strong>${currentLang === 'zh' ? '文件路径' : 'File Path'}:</strong> ../website/data/geojson/${cityKey}_${currentTransport}_*.geojson
+                <strong>${currentLang === 'zh' ? '服务器路径' : 'Server Path'}:</strong> ${SERVER_BASE_URL}${cityKey}_${currentTransport}_*.geojson
             </div>`;
         }
 
