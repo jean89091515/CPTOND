@@ -607,7 +607,7 @@
             <a href="https://figshare.com/articles/dataset/CPTOND-2025/29377427" title="Figshare">
                 <i class="fas fa-database"></i>
             </a>
-            <a href="mailto:contact@example.com" title="Email">
+            <a href="mailto:wljean@126.com" title="Email">
                 <i class="fas fa-envelope"></i>
             </a>
         </div>
@@ -616,8 +616,8 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 使用更可靠的瓦片服务地址
-        const SERVER_BASE_URL = './geojson/';
+        // 更新的GeoJSON服务器地址
+        const SERVER_BASE_URL = 'https://test.bgyoa.xyz/geojson/';
 
         // 多语言配置
         const translations = {
@@ -770,7 +770,7 @@
         let currentCity = '';
         let currentTransport = 'bus';
         let currentLayer = 'stops';
-        let currentBasemap = 'osm';  // 使用OSM作为默认底图
+        let currentBasemap = 'osm';
         let stopsLayer, routesLayer;
         let basemapLayer;
 
@@ -791,8 +791,8 @@
             welcomeMsg.innerHTML = `
                 <i class="fas fa-info-circle"></i> 
                 ${currentLang === 'zh' ? 
-                '<strong>演示版本：</strong>由于GitHub Pages的限制，当前显示的是示例数据。完整数据集请通过下方链接下载。' : 
-                '<strong>Demo Version:</strong> Due to GitHub Pages limitations, sample data is shown. Download the full dataset via the links below.'}
+                '<strong>在线版本：</strong>当前展示的是从服务器实时加载的GeoJSON数据。完整数据集请通过下方链接下载。' : 
+                '<strong>Online Version:</strong> Current display shows GeoJSON data loaded from server. Download the full dataset via the links below.'}
             `;
             dataInfo.insertBefore(welcomeMsg, dataInfo.firstChild);
         }
@@ -830,8 +830,8 @@
                 welcomeMsg.innerHTML = `
                     <i class="fas fa-info-circle"></i> 
                     ${currentLang === 'zh' ? 
-                    '<strong>演示版本：</strong>由于GitHub Pages的限制，当前显示的是示例数据。完整数据集请通过下方链接下载。' : 
-                    '<strong>Demo Version:</strong> Due to GitHub Pages limitations, sample data is shown. Download the full dataset via the links below.'}
+                    '<strong>在线版本：</strong>当前展示的是从服务器实时加载的GeoJSON数据。完整数据集请通过下方链接下载。' : 
+                    '<strong>Online Version:</strong> Current display shows GeoJSON data loaded from server. Download the full dataset via the links below.'}
                 `;
             }
         }
@@ -850,7 +850,7 @@
             const options = {
                 attribution: basemapConfig.attribution,
                 maxZoom: basemapConfig.maxZoom || 18,
-                crossOrigin: true  // 添加CORS支持
+                crossOrigin: true
             };
             
             if (basemapConfig.subdomains) {
@@ -858,33 +858,11 @@
             }
             
             basemapLayer = L.tileLayer(basemapConfig.url, options);
-            
-            // 添加加载事件监听
-            basemapLayer.on('tileload', function() {
-                console.log('底图瓦片加载成功');
-            });
-            
-            basemapLayer.on('tileerror', function(error) {
-                console.error('底图瓦片加载失败:', error);
-                // 如果第一次加载失败，尝试备用地图
-                if (currentBasemap !== 'carto-light') {
-                    console.log('尝试切换到Carto Light作为备用底图...');
-                    currentBasemap = 'carto-light';
-                    document.getElementById('basemapSelect').value = 'carto-light';
-                    updateBasemap();
-                }
-            });
-            
             basemapLayer.addTo(map);
 
             // 初始化图层
             stopsLayer = L.layerGroup();
             routesLayer = L.layerGroup();
-            
-            // 添加一个测试标记以确认地图工作正常
-            L.marker([35.0, 105.0]).addTo(map)
-                .bindPopup('中国中心点 - 地图加载成功')
-                .openPopup();
         }
 
         function updateBasemap() {
@@ -902,54 +880,15 @@
             const options = {
                 attribution: basemapConfig.attribution,
                 maxZoom: basemapConfig.maxZoom || 18,
-                crossOrigin: true  // 添加CORS支持
+                crossOrigin: true
             };
             
-            // 添加额外选项（如果存在）
             if (basemapConfig.subdomains) {
                 options.subdomains = basemapConfig.subdomains;
             }
             
-            console.log('正在加载底图:', currentBasemap, basemapConfig.url);
-            
-            // 创建新的底图层
             basemapLayer = L.tileLayer(basemapConfig.url, options);
-            
-            // 添加事件监听
-            let tileLoadCount = 0;
-            let tileErrorCount = 0;
-            
-            basemapLayer.on('tileload', function() {
-                tileLoadCount++;
-                if (tileLoadCount === 1) {
-                    console.log('底图开始加载成功');
-                }
-            });
-            
-            basemapLayer.on('tileerror', function(error) {
-                tileErrorCount++;
-                console.error('瓦片加载失败:', error.tile ? error.tile.src : 'Unknown');
-                
-                // 如果连续多个瓦片加载失败，尝试切换底图
-                if (tileErrorCount > 5 && currentBasemap !== 'carto-light') {
-                    console.log('底图加载失败次数过多，切换到备用底图...');
-                    currentBasemap = 'carto-light';
-                    document.getElementById('basemapSelect').value = 'carto-light';
-                    setTimeout(() => updateBasemap(), 1000);
-                }
-            });
-            
-            // 添加到地图
             basemapLayer.addTo(map);
-            
-            // 检查地图是否正常
-            setTimeout(() => {
-                if (tileLoadCount === 0 && tileErrorCount === 0) {
-                    console.warn('底图可能未开始加载，请检查网络连接');
-                } else if (tileLoadCount > 0) {
-                    console.log(`底图加载统计: 成功${tileLoadCount}个瓦片, 失败${tileErrorCount}个瓦片`);
-                }
-            }, 3000);
         }
 
         function initializeCitySelect() {
@@ -970,7 +909,6 @@
                     switchCity(currentCity);
                 } else {
                     clearData();
-                    // 重置视图到中国中心
                     map.setView([35.0, 105.0], 5);
                 }
             });
@@ -1053,101 +991,106 @@
             }
         }
 
-        function loadCityData(cityKey) {
+        // 加载真实的GeoJSON数据
+        async function loadCityData(cityKey) {
             showLoading();
             
             // 清除现有数据
             stopsLayer.clearLayers();
             routesLayer.clearLayers();
             
-            // 由于GitHub Pages限制，直接生成示例数据
-            const city = cities[cityKey];
-            if (city) {
-                generateSampleData(city);
+            try {
+                // 构造文件名：城市名_交通类型_数据类型.geojson
+                const stopsFileName = `${cityKey}_${currentTransport}_stops.geojson`;
+                const routesFileName = `${cityKey}_${currentTransport}_routes.geojson`;
+                
+                // 加载站点数据
+                try {
+                    const stopsResponse = await fetch(SERVER_BASE_URL + stopsFileName);
+                    if (stopsResponse.ok) {
+                        const stopsData = await stopsResponse.json();
+                        loadGeoJSONStops(stopsData);
+                    }
+                } catch (error) {
+                    console.log('站点数据加载失败:', error);
+                }
+                
+                // 加载线路数据
+                try {
+                    const routesResponse = await fetch(SERVER_BASE_URL + routesFileName);
+                    if (routesResponse.ok) {
+                        const routesData = await routesResponse.json();
+                        loadGeoJSONRoutes(routesData);
+                    }
+                } catch (error) {
+                    console.log('线路数据加载失败:', error);
+                }
+                
+                updateMapLayers();
+                updateDataAttributes(cityKey);
+                
+            } catch (error) {
+                console.error('数据加载错误:', error);
+                showErrorMessage('数据加载失败，请检查网络连接');
             }
-            
-            updateMapLayers();
-            updateDataAttributes(cityKey);
             
             hideLoading();
         }
 
-        function generateSampleStops(city) {
-            const stopsIcon = currentTransport === 'bus' ? 'fa-bus' : 'fa-subway';
+        function loadGeoJSONStops(geojson) {
             const stopsColor = currentTransport === 'bus' ? '#ff7800' : '#0066cc';
+            const stopsIcon = currentTransport === 'bus' ? 'fa-bus' : 'fa-subway';
             
-            for (let i = 0; i < 20; i++) {
-                const lat = city.lat + (Math.random() - 0.5) * 0.1;
-                const lng = city.lng + (Math.random() - 0.5) * 0.1;
-                
-                const marker = L.circleMarker([lat, lng], {
-                    radius: 6,
-                    fillColor: stopsColor,
-                    color: '#000',
-                    weight: 1,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                });
-                
-                const cityName = currentLang === 'zh' ? city.name : city.name_en;
-                const stopType = currentTransport === 'bus' ? 
-                    (currentLang === 'zh' ? '公交站点' : 'Bus Stop') : 
-                    (currentLang === 'zh' ? '地铁站点' : 'Metro Station');
-                const stopName = `${cityName}${currentLang === 'zh' ? '站点' : ' Stop'}${i+1}`;
-                
-                marker.bindPopup(`
-                    <strong><i class="fas ${stopsIcon}"></i> ${stopName}</strong><br>
-                    ${currentLang === 'zh' ? '坐标' : 'Coordinates'}: ${lat.toFixed(6)}, ${lng.toFixed(6)}<br>
-                    ${currentLang === 'zh' ? '类型' : 'Type'}: ${stopType}<br>
-                    <em>${currentLang === 'zh' ? '示例数据' : 'Sample Data'}</em>
-                `);
-                
-                stopsLayer.addLayer(marker);
-            }
+            L.geoJSON(geojson, {
+                pointToLayer: function (feature, latlng) {
+                    return L.circleMarker(latlng, {
+                        radius: 6,
+                        fillColor: stopsColor,
+                        color: '#000',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+                },
+                onEachFeature: function (feature, layer) {
+                    const props = feature.properties;
+                    const popupContent = `
+                        <strong><i class="fas ${stopsIcon}"></i> ${props.name || props.stop_name || '未知站点'}</strong><br>
+                        ${currentLang === 'zh' ? '坐标' : 'Coordinates'}: ${feature.geometry.coordinates[1].toFixed(6)}, ${feature.geometry.coordinates[0].toFixed(6)}<br>
+                        ${props.route_id ? `${currentLang === 'zh' ? '线路ID' : 'Route ID'}: ${props.route_id}<br>` : ''}
+                        ${props.city ? `${currentLang === 'zh' ? '城市' : 'City'}: ${props.city}<br>` : ''}
+                    `;
+                    layer.bindPopup(popupContent);
+                }
+            }).addTo(stopsLayer);
         }
 
-        function generateSampleRoutes(city) {
+        function loadGeoJSONRoutes(geojson) {
             const routeColor = currentTransport === 'bus' ? '#3388ff' : '#ff6600';
             
-            for (let i = 0; i < 5; i++) {
-                const points = [];
-                const baseLatLng = [city.lat + (Math.random() - 0.5) * 0.08, 
-                                  city.lng + (Math.random() - 0.5) * 0.08];
-                
-                for (let j = 0; j < 10; j++) {
-                    points.push([
-                        baseLatLng[0] + (j * 0.01) + (Math.random() - 0.5) * 0.005,
-                        baseLatLng[1] + (j * 0.01) + (Math.random() - 0.5) * 0.005
-                    ]);
+            L.geoJSON(geojson, {
+                style: function (feature) {
+                    return {
+                        color: routeColor,
+                        weight: 3,
+                        opacity: 0.7
+                    };
+                },
+                onEachFeature: function (feature, layer) {
+                    const props = feature.properties;
+                    const routeType = currentTransport === 'bus' ? 
+                        (currentLang === 'zh' ? '公交线路' : 'Bus Route') : 
+                        (currentLang === 'zh' ? '地铁线路' : 'Metro Line');
+                    
+                    const popupContent = `
+                        <strong>${props.name || props.route_name || '未知线路'}</strong><br>
+                        ${currentLang === 'zh' ? '类型' : 'Type'}: ${routeType}<br>
+                        ${props.route_id ? `${currentLang === 'zh' ? '线路ID' : 'Route ID'}: ${props.route_id}<br>` : ''}
+                        ${props.city ? `${currentLang === 'zh' ? '城市' : 'City'}: ${props.city}<br>` : ''}
+                    `;
+                    layer.bindPopup(popupContent);
                 }
-                
-                const polyline = L.polyline(points, {
-                    color: routeColor,
-                    weight: 3,
-                    opacity: 0.7
-                });
-                
-                const cityName = currentLang === 'zh' ? city.name : city.name_en;
-                const routeType = currentTransport === 'bus' ? 
-                    (currentLang === 'zh' ? '公交线路' : 'Bus Route') : 
-                    (currentLang === 'zh' ? '地铁线路' : 'Metro Line');
-                const routeName = currentTransport === 'bus' ? 
-                    `${cityName}${i+1}${currentLang === 'zh' ? '路' : ' Route'}` :
-                    `${currentLang === 'zh' ? '地铁' : 'Metro'}${i+1}${currentLang === 'zh' ? '号线' : ' Line'}`;
-                
-                polyline.bindPopup(`
-                    <strong>${routeName}</strong><br>
-                    ${currentLang === 'zh' ? '类型' : 'Type'}: ${routeType}<br>
-                    <em>${currentLang === 'zh' ? '示例数据' : 'Sample Data'}</em>
-                `);
-                
-                routesLayer.addLayer(polyline);
-            }
-        }
-
-        function generateSampleData(city) {
-            generateSampleStops(city);
-            generateSampleRoutes(city);
+            }).addTo(routesLayer);
         }
 
         function updateMapLayers() {
@@ -1186,21 +1129,17 @@
                 (currentLang === 'zh' ? '地铁' : 'Metro');
             
             const attributes = currentLang === 'zh' ? [
-                { name: 'STOP_ID', desc: '站点唯一标识符' },
-                { name: 'STOP_NAME', desc: '站点名称' },
-                { name: 'LONGITUDE', desc: '经度坐标' },
-                { name: 'LATITUDE', desc: '纬度坐标' },
-                { name: 'ROUTE_ID', desc: '所属线路ID' },
-                { name: 'CITY_CODE', desc: '城市编码' },
-                { name: 'TRANSPORT_TYPE', desc: '交通方式' }
+                { name: 'name/stop_name', desc: '站点或线路名称' },
+                { name: 'coordinates', desc: 'GeoJSON坐标 [经度, 纬度]' },
+                { name: 'route_id', desc: '线路唯一标识符' },
+                { name: 'city', desc: '所属城市' },
+                { name: 'transport_type', desc: '交通方式类型' }
             ] : [
-                { name: 'STOP_ID', desc: 'Unique stop identifier' },
-                { name: 'STOP_NAME', desc: 'Stop name' },
-                { name: 'LONGITUDE', desc: 'Longitude coordinate' },
-                { name: 'LATITUDE', desc: 'Latitude coordinate' },
-                { name: 'ROUTE_ID', desc: 'Associated route ID' },
-                { name: 'CITY_CODE', desc: 'City code' },
-                { name: 'TRANSPORT_TYPE', desc: 'Transport type' }
+                { name: 'name/stop_name', desc: 'Stop or route name' },
+                { name: 'coordinates', desc: 'GeoJSON coordinates [longitude, latitude]' },
+                { name: 'route_id', desc: 'Route unique identifier' },
+                { name: 'city', desc: 'City name' },
+                { name: 'transport_type', desc: 'Transport mode type' }
             ];
             
             dataAttributes.innerHTML = attributes.map(attr => 
@@ -1210,7 +1149,26 @@
             ).join('') + 
             `<div class="attribute-item">
                 <strong>${currentLang === 'zh' ? '当前数据' : 'Current Data'}:</strong> ${currentLang === 'zh' ? city.name : city.name_en} - ${transportType}
+            </div>
+            <div class="attribute-item">
+                <strong>${currentLang === 'zh' ? '数据源' : 'Data Source'}:</strong> ${SERVER_BASE_URL}${cityKey}_${currentTransport}_*.geojson
             </div>`;
+        }
+
+        function showErrorMessage(message) {
+            const dataInfo = document.getElementById('dataInfo');
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'error-message';
+            errorMsg.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i> 
+                <strong>${currentLang === 'zh' ? '错误' : 'Error'}:</strong> ${message}
+            `;
+            dataInfo.insertBefore(errorMsg, dataInfo.firstChild);
+            
+            // 3秒后自动移除错误消息
+            setTimeout(() => {
+                errorMsg.remove();
+            }, 3000);
         }
 
         function animateStats() {
