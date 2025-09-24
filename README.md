@@ -48,19 +48,14 @@ This repository hosts an interactive web visualization platform that allows user
 ```
 CPTOND/
 ├── index.html              # Main web interface
-├── assets/
-│   ├── css/               # Stylesheets
-│   ├── js/                # JavaScript modules
-│   └── images/            # UI assets
-├── data/                  # Sample GeoJSON files
-├── docs/                  # Documentation
+├── geojson/                  # Sample GeoJSON files
 └── README.md              # This file
 ```
 
 ## Usage
 
 ### Online Preview
-Visit the [interactive web platform](https://your-github-pages-url.com) to:
+Visit the [interactive web platform](https://jean89091515.github.io/CPTOND/) to:
 1. Select a city from the dropdown menu
 2. Choose transport type (Bus/Metro)
 3. Toggle between stops, routes, or combined view
@@ -69,7 +64,7 @@ Visit the [interactive web platform](https://your-github-pages-url.com) to:
 ### Local Development
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/CPTOND.git
+git clone https://github.com/jean89091515/CPTOND.git
 cd CPTOND
 
 # Serve locally (Python 3)
