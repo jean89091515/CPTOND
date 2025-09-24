@@ -553,6 +553,10 @@
         .leaflet-popup-content-wrapper {
             border-radius: 10px;
         }
+
+        .leaflet-popup-content {
+            margin: 10px 15px;
+        }
     </style>
 </head>
 <body>
@@ -713,7 +717,7 @@
                     <span data-key="authors-title">论文作者</span>
                 </h3>
                 <div class="authors-content" data-lang-content="zh">
-                    <p><strong>王亮</strong><sup>1,2</sup>，<strong>韦鹤</strong><sup>2</sup>，<strong>关宇</strong><sup>2</sup>，<strong>欧阳立斌</strong><sup>2</sup>，<strong>许丹丹</strong><sup>2</sup>，<strong>韩雪花</strong><sup>2</sup>，<strong>张敏</strong><sup>2</sup>，<strong>陈萌</strong><sup>2</sup>，<strong>孙道胜</strong><sup>2</sup>，<strong>龚大庆</strong><sup>1</sup>，<strong>张振基</strong><sup>1</sup>，<strong>张星华</strong><sup>*3</sup>，<strong>张晓东</strong><sup>*2,4</sup></p>
+                    <p><strong>王良</strong><sup>1,2</sup>，<strong>魏贺</strong><sup>2</sup>，<strong>管玉</strong><sup>2</sup>，<strong>欧阳礼彬</strong><sup>2</sup>，<strong>许丹丹</strong><sup>2</sup>，<strong>韩雪华</strong><sup>2</sup>，<strong>张敏</strong><sup>2</sup>，<strong>陈猛</strong><sup>2</sup>，<strong>孙道胜</strong><sup>2</sup>，<strong>宫大庆</strong><sup>1</sup>，<strong>张真继</strong><sup>1</sup>，<strong>张兴华</strong><sup>*3</sup>，<strong>张晓东</strong><sup>*2,4</sup></p>
                     <div style="font-size: 0.9em; margin-top: 10px; line-height: 1.6;">
                         <p>1. 北京交通大学经济管理学院，北京，100044</p>
                         <p>2. 北京市城市规划设计研究院，北京，100045</p>
@@ -1458,7 +1462,7 @@
             L.geoJSON(geojson, {
                 pointToLayer: function (feature, latlng) {
                     return L.circleMarker(latlng, {
-                        radius: 6,
+                        radius: 3, // 缩小一半的大小
                         fillColor: stopsColor,
                         color: '#000',
                         weight: 1,
@@ -1470,32 +1474,66 @@
                     const props = feature.properties;
                     const transportIcon = currentTransport === 'bus' ? 'fa-bus' : 'fa-subway';
                     
-                    const popupContent = `
+                    // 构建弹窗内容，使用实际的GeoJSON属性
+                    let popupContent = `
                         <div style="font-size: 14px; min-width: 200px;">
                             <h4 style="margin: 5px 0; color: #333; display: flex; align-items: center; gap: 8px;">
                                 <i class="fas ${transportIcon}"></i> 
-                                ${props.name || props.stop_name || (currentLang === 'zh' ? '未知站点' : 'Unknown Stop')}
+                    `;
+                    
+                    // 站点名称 - 支持多种可能的字段名
+                    const stopName = props.name_cn || props.name_en || props.name || props.stop_name || 
+                                   props.station_name || (currentLang === 'zh' ? '未知站点' : 'Unknown Stop');
+                    popupContent += stopName;
+                    
+                    popupContent += `
                             </h4>
                             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-                            <p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '坐标' : 'Coordinates'}:</strong> ${feature.geometry.coordinates[1].toFixed(6)}, ${feature.geometry.coordinates[0].toFixed(6)}</p>
-                            ${props.route_id ? `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '线路ID' : 'Route ID'}:</strong> ${props.route_id}</p>` : ''}
-                            ${props.city ? `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '城市' : 'City'}:</strong> ${props.city}</p>` : ''}
-                            <p style="margin: 3px 0; font-size: 12px; color: #666;"><strong>${currentLang === 'zh' ? '数据类型' : 'Data Type'}:</strong> ${currentTransport === 'bus' ? (currentLang === 'zh' ? '公交站点' : 'Bus Stop') : (currentLang === 'zh' ? '地铁站点' : 'Metro Station')}</p>
-                        </div>
                     `;
+                    
+                    // 坐标信息
+                    popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '坐标' : 'Coordinates'}:</strong> ${feature.geometry.coordinates[1].toFixed(6)}, ${feature.geometry.coordinates[0].toFixed(6)}</p>`;
+                    
+                    // 线路信息
+                    if (props.route_cn || props.route_en) {
+                        const routeName = currentLang === 'zh' ? (props.route_cn || props.route_en) : (props.route_en || props.route_cn);
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '线路' : 'Route'}:</strong> ${routeName}</p>`;
+                    }
+                    
+                    // 站点ID
+                    if (props.stop_id) {
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '站点ID' : 'Stop ID'}:</strong> ${props.stop_id}</p>`;
+                    }
+                    
+                    // 序号
+                    if (props.sequence) {
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '站序' : 'Sequence'}:</strong> ${props.sequence}</p>`;
+                    }
+                    
+                    // 运营商
+                    if (props.operator || props.company) {
+                        const operator = props.operator || props.company;
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '运营商' : 'Operator'}:</strong> ${operator}</p>`;
+                    }
+                    
+                    // 数据类型
+                    popupContent += `<p style="margin: 3px 0; font-size: 12px; color: #666;"><strong>${currentLang === 'zh' ? '数据类型' : 'Data Type'}:</strong> ${currentTransport === 'bus' ? (currentLang === 'zh' ? '公交站点' : 'Bus Stop') : (currentLang === 'zh' ? '地铁站点' : 'Metro Station')}</p>`;
+                    
+                    popupContent += `</div>`;
+                    
                     layer.bindPopup(popupContent);
                     
                     // 添加悬停效果
                     layer.on('mouseover', function() {
                         this.setStyle({
-                            radius: 8,
+                            radius: 5,
                             weight: 2
                         });
                     });
                     
                     layer.on('mouseout', function() {
                         this.setStyle({
-                            radius: 6,
+                            radius: 3,
                             weight: 1
                         });
                     });
@@ -1507,10 +1545,10 @@
             const routeColors = ['#3388ff', '#ff6600', '#33cc33', '#cc3333', '#9933cc', '#33cccc', '#ff9900', '#cc9933'];
             
             L.geoJSON(geojson, {
-                style: function (feature, index) {
-                    const colorIndex = feature.properties.route_id ? 
-                        Math.abs(feature.properties.route_id.toString().charCodeAt(0)) % routeColors.length : 
-                        Math.floor(Math.random() * routeColors.length);
+                style: function (feature) {
+                    // 使用路线名称或ID来确定颜色
+                    const routeId = feature.properties.route_id || feature.properties.route_cn || feature.properties.route_en || Math.random().toString();
+                    const colorIndex = Math.abs(routeId.toString().split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % routeColors.length;
                     
                     return {
                         color: routeColors[colorIndex],
@@ -1524,21 +1562,64 @@
                         (currentLang === 'zh' ? '公交线路' : 'Bus Route') : 
                         (currentLang === 'zh' ? '地铁线路' : 'Metro Line');
                     
-                    const popupContent = `
+                    // 构建弹窗内容，使用实际的GeoJSON属性
+                    let popupContent = `
                         <div style="font-size: 14px; min-width: 250px;">
                             <h4 style="margin: 5px 0; color: #333;">
                                 <i class="fas ${currentTransport === 'bus' ? 'fa-bus' : 'fa-subway'}"></i> 
-                                ${props.name || props.route_name || (currentLang === 'zh' ? '未知线路' : 'Unknown Route')}
+                    `;
+                    
+                    // 线路名称 - 支持多种可能的字段名
+                    const routeName = currentLang === 'zh' ? 
+                        (props.route_cn || props.name_cn || props.route_en || props.name_en || props.name || '未知线路') :
+                        (props.route_en || props.name_en || props.route_cn || props.name_cn || props.name || 'Unknown Route');
+                    popupContent += routeName;
+                    
+                    popupContent += `
                             </h4>
                             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
                             <p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '类型' : 'Type'}:</strong> ${routeType}</p>
-                            ${props.route_id ? `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '线路ID' : 'Route ID'}:</strong> ${props.route_id}</p>` : ''}
-                            ${props.city ? `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '城市' : 'City'}:</strong> ${props.city}</p>` : ''}
-                            ${props.operator ? `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '运营商' : 'Operator'}:</strong> ${props.operator}</p>` : ''}
-                            ${props.from && props.to ? `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '起终点' : 'From-To'}:</strong> ${props.from} → ${props.to}</p>` : ''}
-                            <p style="margin: 3px 0; font-size: 12px; color: #666;"><strong>${currentLang === 'zh' ? '数据源' : 'Data Source'}:</strong> CPTOND-2025</p>
-                        </div>
                     `;
+                    
+                    // 起终点信息
+                    const startStop = currentLang === 'zh' ? 
+                        (props.s_stop_cn || props.start_stop || props.from) : 
+                        (props.s_stop_en || props.start_stop || props.from);
+                    const endStop = currentLang === 'zh' ? 
+                        (props.e_stop_cn || props.end_stop || props.to) : 
+                        (props.e_stop_en || props.end_stop || props.to);
+                    
+                    if (startStop && endStop) {
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '起终点' : 'From-To'}:</strong> ${startStop} → ${endStop}</p>`;
+                    }
+                    
+                    // 站点数
+                    if (props.total_stop || props.stop_count) {
+                        const totalStops = props.total_stop || props.stop_count;
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '站点数' : 'Total Stops'}:</strong> ${totalStops}</p>`;
+                    }
+                    
+                    // 距离信息
+                    if (props.distance) {
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '距离' : 'Distance'}:</strong> ${props.distance}km</p>`;
+                    }
+                    
+                    // 线路ID
+                    if (props.route_id) {
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '线路ID' : 'Route ID'}:</strong> ${props.route_id}</p>`;
+                    }
+                    
+                    // 运营商
+                    if (props.operator || props.company) {
+                        const operator = props.operator || props.company;
+                        popupContent += `<p style="margin: 3px 0;"><strong>${currentLang === 'zh' ? '运营商' : 'Operator'}:</strong> ${operator}</p>`;
+                    }
+                    
+                    // 数据来源
+                    popupContent += `<p style="margin: 3px 0; font-size: 12px; color: #666;"><strong>${currentLang === 'zh' ? '数据源' : 'Data Source'}:</strong> CPTOND-2025</p>`;
+                    
+                    popupContent += `</div>`;
+                    
                     layer.bindPopup(popupContent);
                     
                     // 添加悬停效果
@@ -1657,25 +1738,25 @@
                 (currentLang === 'zh' ? '地铁' : 'Metro');
             
             const attributes = currentLang === 'zh' ? [
-                { key: 'name/stop_name', desc: '站点或线路名称', type: 'String' },
+                { key: 'name_cn/name_en', desc: '站点或线路中英文名称', type: 'String' },
                 { key: 'coordinates', desc: 'GeoJSON坐标 [经度, 纬度]', type: 'Array' },
-                { key: 'route_id', desc: '线路唯一标识符', type: 'String/Number' },
-                { key: 'city', desc: '所属城市', type: 'String' },
-                { key: 'operator', desc: '运营商名称', type: 'String' },
-                { key: 'operating_hours', desc: '运营时间', type: 'String' },
-                { key: 'fare', desc: '票价信息', type: 'String/Number' },
-                { key: 'geometry', desc: 'Shapefile几何数据', type: 'Object' },
-                { key: 'spatial_accuracy', desc: '空间定位精度', type: 'Number' }
+                { key: 'route_cn/route_en', desc: '线路中英文名称', type: 'String' },
+                { key: 'stop_id', desc: '站点唯一标识符', type: 'String' },
+                { key: 'sequence', desc: '站点在线路中的序号', type: 'Number' },
+                { key: 's_stop_cn/e_stop_cn', desc: '起终站中文名称', type: 'String' },
+                { key: 's_stop_en/e_stop_en', desc: '起终站英文名称', type: 'String' },
+                { key: 'total_stop', desc: '线路总站数', type: 'Number' },
+                { key: 'distance', desc: '线路总长度(公里)', type: 'Number' }
             ] : [
-                { key: 'name/stop_name', desc: 'Stop or route name', type: 'String' },
+                { key: 'name_cn/name_en', desc: 'Stop/route name in Chinese/English', type: 'String' },
                 { key: 'coordinates', desc: 'GeoJSON coordinates [lng, lat]', type: 'Array' },
-                { key: 'route_id', desc: 'Route unique identifier', type: 'String/Number' },
-                { key: 'city', desc: 'City name', type: 'String' },
-                { key: 'operator', desc: 'Operator name', type: 'String' },
-                { key: 'operating_hours', desc: 'Operating hours', type: 'String' },
-                { key: 'fare', desc: 'Fare information', type: 'String/Number' },
-                { key: 'geometry', desc: 'Shapefile geometry data', type: 'Object' },
-                { key: 'spatial_accuracy', desc: 'Spatial positioning accuracy', type: 'Number' }
+                { key: 'route_cn/route_en', desc: 'Route name in Chinese/English', type: 'String' },
+                { key: 'stop_id', desc: 'Stop unique identifier', type: 'String' },
+                { key: 'sequence', desc: 'Stop sequence in route', type: 'Number' },
+                { key: 's_stop_cn/e_stop_cn', desc: 'Start/end stop Chinese name', type: 'String' },
+                { key: 's_stop_en/e_stop_en', desc: 'Start/end stop English name', type: 'String' },
+                { key: 'total_stop', desc: 'Total stops in route', type: 'Number' },
+                { key: 'distance', desc: 'Total route distance (km)', type: 'Number' }
             ];
             
             currentDataInfo.innerHTML = `
