@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CPTOND-2025 Dataset | 中国公共交通网络数据集</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
@@ -293,6 +293,7 @@
             overflow: hidden;
             margin: 20px 0;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
 
         .loading-indicator {
@@ -540,15 +541,18 @@
                     <label data-key="basemap-type">底图样式</label>
                     <select class="basemap-select" id="basemapSelect">
                         <option value="osm">OpenStreetMap</option>
-                        <option value="satellite">卫星图</option>
-                        <option value="topo">地形图</option>
-                        <option value="light">简洁主题</option>
-                        <option value="dark">深色主题</option>
+                        <option value="osm-cn">OSM中国镜像</option>
+                        <option value="carto-light">Carto简洁</option>
+                        <option value="carto-dark">Carto深色</option>
+                        <option value="esri-world">Esri世界地图</option>
+                        <option value="esri-satellite">Esri卫星图</option>
+                        <option value="stamen-toner">Stamen黑白</option>
+                        <option value="stamen-terrain">Stamen地形</option>
                     </select>
                 </div>
             </div>
 
-            <div class="map-container" style="position: relative;">
+            <div class="map-container">
                 <div id="map"></div>
                 <div class="loading-indicator" id="loadingIndicator">
                     <i class="fas fa-spinner fa-spin"></i> 
@@ -610,7 +614,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // 使用更可靠的瓦片服务地址
         const SERVER_BASE_URL = './geojson/';
@@ -713,31 +717,50 @@
             tianjin: { name: '天津', name_en: 'Tianjin', lat: 39.3434, lng: 117.3616, zoom: 10 }
         };
 
-        // 使用更可靠和最新的底图服务URLs
+        // 使用中国可访问的底图服务 - 支持HTTP和HTTPS
         const basemaps = {
-            osm: {
+            'osm': {
                 url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
             },
-            satellite: {
-                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                attribution: '© <a href="https://www.esri.com/">Esri</a>, Maxar, GeoEye, Earthstar Geographics'
+            'osm-cn': {
+                url: 'https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+                attribution: '© OpenStreetMap contributors',
+                subdomains: 'abc',
+                maxZoom: 19
             },
-            topo: {
-                url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-                attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-            },
-            light: {
+            'carto-light': {
                 url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
                 subdomains: 'abcd',
                 maxZoom: 20
             },
-            dark: {
+            'carto-dark': {
                 url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
                 subdomains: 'abcd',
                 maxZoom: 20
+            },
+            'stamen-toner': {
+                url: 'https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.png',
+                attribution: '© <a href="https://stadiamaps.com/">Stadia Maps</a>, © <a href="https://openmaptiles.org/">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 20
+            },
+            'stamen-terrain': {
+                url: 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png', 
+                attribution: '© <a href="https://stadiamaps.com/">Stadia Maps</a>, © <a href="https://openmaptiles.org/">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 18
+            },
+            'esri-world': {
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+                attribution: '© Esri',
+                maxZoom: 19
+            },
+            'esri-satellite': {
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                attribution: '© Esri',
+                maxZoom: 19
             }
         };
 
@@ -747,7 +770,7 @@
         let currentCity = '';
         let currentTransport = 'bus';
         let currentLayer = 'stops';
-        let currentBasemap = 'osm';
+        let currentBasemap = 'osm';  // 使用OSM作为默认底图
         let stopsLayer, routesLayer;
         let basemapLayer;
 
@@ -814,28 +837,119 @@
         }
 
         function initializeMap() {
-            map = L.map('map').setView([35.0, 105.0], 5);
+            // 创建地图
+            map = L.map('map', {
+                center: [35.0, 105.0],
+                zoom: 5,
+                zoomControl: true,
+                attributionControl: true
+            });
             
-            // 初始化底图
+            // 初始化底图 - 使用OSM作为默认
             const basemapConfig = basemaps[currentBasemap];
             const options = {
-                attribution: basemapConfig.attribution
+                attribution: basemapConfig.attribution,
+                maxZoom: basemapConfig.maxZoom || 18,
+                crossOrigin: true  // 添加CORS支持
             };
             
-            // 添加额外选项（如果存在）
-            if (basemapConfig.subdomains) options.subdomains = basemapConfig.subdomains;
-            if (basemapConfig.maxZoom) options.maxZoom = basemapConfig.maxZoom;
+            if (basemapConfig.subdomains) {
+                options.subdomains = basemapConfig.subdomains;
+            }
             
-            basemapLayer = L.tileLayer(basemapConfig.url, options).addTo(map);
+            basemapLayer = L.tileLayer(basemapConfig.url, options);
+            
+            // 添加加载事件监听
+            basemapLayer.on('tileload', function() {
+                console.log('底图瓦片加载成功');
+            });
+            
+            basemapLayer.on('tileerror', function(error) {
+                console.error('底图瓦片加载失败:', error);
+                // 如果第一次加载失败，尝试备用地图
+                if (currentBasemap !== 'carto-light') {
+                    console.log('尝试切换到Carto Light作为备用底图...');
+                    currentBasemap = 'carto-light';
+                    document.getElementById('basemapSelect').value = 'carto-light';
+                    updateBasemap();
+                }
+            });
+            
+            basemapLayer.addTo(map);
 
             // 初始化图层
             stopsLayer = L.layerGroup();
             routesLayer = L.layerGroup();
             
-            // 添加错误处理
-            basemapLayer.on('tileerror', function(e) {
-                console.warn('底图加载失败:', e.tile.src);
+            // 添加一个测试标记以确认地图工作正常
+            L.marker([35.0, 105.0]).addTo(map)
+                .bindPopup('中国中心点 - 地图加载成功')
+                .openPopup();
+        }
+
+        function updateBasemap() {
+            // 如果已有底图，先移除
+            if (basemapLayer) {
+                map.removeLayer(basemapLayer);
+            }
+            
+            const basemapConfig = basemaps[currentBasemap];
+            if (!basemapConfig) {
+                console.error('底图配置不存在:', currentBasemap);
+                return;
+            }
+            
+            const options = {
+                attribution: basemapConfig.attribution,
+                maxZoom: basemapConfig.maxZoom || 18,
+                crossOrigin: true  // 添加CORS支持
+            };
+            
+            // 添加额外选项（如果存在）
+            if (basemapConfig.subdomains) {
+                options.subdomains = basemapConfig.subdomains;
+            }
+            
+            console.log('正在加载底图:', currentBasemap, basemapConfig.url);
+            
+            // 创建新的底图层
+            basemapLayer = L.tileLayer(basemapConfig.url, options);
+            
+            // 添加事件监听
+            let tileLoadCount = 0;
+            let tileErrorCount = 0;
+            
+            basemapLayer.on('tileload', function() {
+                tileLoadCount++;
+                if (tileLoadCount === 1) {
+                    console.log('底图开始加载成功');
+                }
             });
+            
+            basemapLayer.on('tileerror', function(error) {
+                tileErrorCount++;
+                console.error('瓦片加载失败:', error.tile ? error.tile.src : 'Unknown');
+                
+                // 如果连续多个瓦片加载失败，尝试切换底图
+                if (tileErrorCount > 5 && currentBasemap !== 'carto-light') {
+                    console.log('底图加载失败次数过多，切换到备用底图...');
+                    currentBasemap = 'carto-light';
+                    document.getElementById('basemapSelect').value = 'carto-light';
+                    setTimeout(() => updateBasemap(), 1000);
+                }
+            });
+            
+            // 添加到地图
+            basemapLayer.addTo(map);
+            
+            // 检查地图是否正常
+            setTimeout(() => {
+                if (tileLoadCount === 0 && tileErrorCount === 0) {
+                    console.warn('底图可能未开始加载，请检查网络连接');
+                } else if (tileLoadCount > 0) {
+                    console.log(`底图加载统计: 成功${tileLoadCount}个瓦片, 失败${tileErrorCount}个瓦片`);
+                }
+            }, 3000);
         }
 
         function initializeCitySelect() {
@@ -856,6 +970,8 @@
                     switchCity(currentCity);
                 } else {
                     clearData();
+                    // 重置视图到中国中心
+                    map.setView([35.0, 105.0], 5);
                 }
             });
         }
@@ -910,23 +1026,31 @@
 
         function switchCity(cityKey) {
             const city = cities[cityKey];
-            map.setView([city.lat, city.lng], city.zoom);
-            loadCityData(cityKey);
+            if (city) {
+                map.setView([city.lat, city.lng], city.zoom);
+                loadCityData(cityKey);
+            }
         }
 
         function clearData() {
-            stopsLayer.clearLayers();
-            routesLayer.clearLayers();
+            if (stopsLayer) stopsLayer.clearLayers();
+            if (routesLayer) routesLayer.clearLayers();
             updateMapLayers();
             updateDataAttributes(null);
         }
 
         function showLoading() {
-            document.getElementById('loadingIndicator').style.display = 'block';
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'block';
+            }
         }
 
         function hideLoading() {
-            document.getElementById('loadingIndicator').style.display = 'none';
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
         }
 
         function loadCityData(cityKey) {
@@ -938,7 +1062,9 @@
             
             // 由于GitHub Pages限制，直接生成示例数据
             const city = cities[cityKey];
-            generateSampleData(city);
+            if (city) {
+                generateSampleData(city);
+            }
             
             updateMapLayers();
             updateDataAttributes(cityKey);
@@ -1026,8 +1152,8 @@
 
         function updateMapLayers() {
             // 清除所有图层
-            map.removeLayer(stopsLayer);
-            map.removeLayer(routesLayer);
+            if (map.hasLayer(stopsLayer)) map.removeLayer(stopsLayer);
+            if (map.hasLayer(routesLayer)) map.removeLayer(routesLayer);
             
             // 根据选择添加图层
             switch(currentLayer) {
@@ -1042,30 +1168,6 @@
                     map.addLayer(stopsLayer);
                     break;
             }
-        }
-
-        function updateBasemap() {
-            // 移除旧底图
-            map.removeLayer(basemapLayer);
-            
-            // 创建新底图
-            const basemapConfig = basemaps[currentBasemap];
-            const options = {
-                attribution: basemapConfig.attribution
-            };
-            
-            // 添加额外选项（如果存在）
-            if (basemapConfig.subdomains) options.subdomains = basemapConfig.subdomains;
-            if (basemapConfig.maxZoom) options.maxZoom = basemapConfig.maxZoom;
-            
-            basemapLayer = L.tileLayer(basemapConfig.url, options);
-            
-            // 添加错误处理
-            basemapLayer.on('tileerror', function(e) {
-                console.warn('底图加载失败:', e.tile.src);
-            });
-            
-            basemapLayer.addTo(map);
         }
 
         function updateDataAttributes(cityKey) {
@@ -1120,6 +1222,8 @@
         }
 
         function animateNumber(element, target, duration = 2000) {
+            if (!element) return;
+            
             const start = 0;
             const increment = target / (duration / 16);
             let current = start;
