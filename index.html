@@ -390,15 +390,6 @@
             color: #2e7d32;
         }
 
-        .file-size-warning {
-            background: rgba(255, 152, 0, 0.1);
-            border: 2px solid #ff9800;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 15px 0;
-            color: #e65100;
-        }
-
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -509,16 +500,6 @@
                 <i class="fas fa-map"></i>
                 <span data-key="preview-title">在线数据预览</span>
             </h2>
-            
-            <!-- 文件大小警告 -->
-            <div class="file-size-warning" id="fileSizeWarning">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong data-key="warning-title">注意:</strong>
-                <span data-key="warning-message">
-                    由于GitHub Pages对文件大小的限制，此演示版本仅显示压缩后的示例数据。
-                    完整数据集请通过下方链接下载。
-                </span>
-            </div>
             
             <div class="map-controls">
                 <div class="control-group">
@@ -631,8 +612,8 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
-        // 本地GeoJSON文件路径配置
-        const LOCAL_GEOJSON_PATH = './geojson/';
+        // 使用更可靠的瓦片服务地址
+        const SERVER_BASE_URL = './geojson/';
 
         // 多语言配置
         const translations = {
@@ -674,9 +655,7 @@
                 `,
                 'download-dataset': '下载完整数据集',
                 'view-figshare': '查看Figshare页面',
-                'footer-project': '数据集项目',
-                'warning-title': '注意:',
-                'warning-message': '由于GitHub Pages对文件大小的限制，此演示版本仅显示压缩后的示例数据。完整数据集请通过下方链接下载。'
+                'footer-project': '数据集项目'
             },
             en: {
                 'title': 'CPTOND-2025 China Public Transport Network Dataset',
@@ -716,67 +695,22 @@
                 `,
                 'download-dataset': 'Download Full Dataset',
                 'view-figshare': 'View Figshare Page',
-                'footer-project': 'Dataset Project',
-                'warning-title': 'Notice:',
-                'warning-message': 'Due to GitHub Pages file size limitations, this demo shows compressed sample data only. Please download the complete dataset via the links below.'
+                'footer-project': 'Dataset Project'
             }
         };
 
-        // 城市数据配置 - 只包含有可用数据文件的城市
+        // 城市数据配置
         const cities = {
-            beijing: { 
-                name: '北京', 
-                name_en: 'Beijing', 
-                lat: 39.9042, 
-                lng: 116.4074, 
-                zoom: 10,
-                // 指定每个城市可用的数据文件
-                files: {
-                    bus: {
-                        stops: 'beijing_bus_stops.geojson',
-                        routes: 'beijing_bus_routes.geojson'
-                    },
-                    metro: {
-                        stops: 'beijing_metro_stops.geojson',
-                        routes: 'beijing_metro_routes.geojson'
-                    }
-                }
-            },
-            shanghai: { 
-                name: '上海', 
-                name_en: 'Shanghai', 
-                lat: 31.2304, 
-                lng: 121.4737, 
-                zoom: 10,
-                files: {
-                    bus: {
-                        stops: 'shanghai_bus_stops.geojson',
-                        routes: 'shanghai_bus_routes.geojson'
-                    },
-                    metro: {
-                        stops: 'shanghai_metro_stops.geojson',
-                        routes: 'shanghai_metro_routes.geojson'
-                    }
-                }
-            },
-            guangzhou: { 
-                name: '广州', 
-                name_en: 'Guangzhou', 
-                lat: 23.1291, 
-                lng: 113.2644, 
-                zoom: 10,
-                files: {
-                    bus: {
-                        stops: 'guangzhou_bus_stops.geojson',
-                        routes: 'guangzhou_bus_routes.geojson'
-                    },
-                    metro: {
-                        stops: 'guangzhou_metro_stops.geojson',
-                        routes: 'guangzhou_metro_routes.geojson'
-                    }
-                }
-            }
-            // 根据实际可用的数据文件继续添加城市
+            beijing: { name: '北京', name_en: 'Beijing', lat: 39.9042, lng: 116.4074, zoom: 10 },
+            shanghai: { name: '上海', name_en: 'Shanghai', lat: 31.2304, lng: 121.4737, zoom: 10 },
+            guangzhou: { name: '广州', name_en: 'Guangzhou', lat: 23.1291, lng: 113.2644, zoom: 10 },
+            shenzhen: { name: '深圳', name_en: 'Shenzhen', lat: 22.5431, lng: 114.0579, zoom: 10 },
+            chengdu: { name: '成都', name_en: 'Chengdu', lat: 30.5728, lng: 104.0668, zoom: 10 },
+            hangzhou: { name: '杭州', name_en: 'Hangzhou', lat: 30.2741, lng: 120.1551, zoom: 10 },
+            wuhan: { name: '武汉', name_en: 'Wuhan', lat: 30.5928, lng: 114.3055, zoom: 10 },
+            xian: { name: '西安', name_en: 'Xian', lat: 34.2654, lng: 108.9540, zoom: 10 },
+            nanjing: { name: '南京', name_en: 'Nanjing', lat: 32.0603, lng: 118.7969, zoom: 10 },
+            tianjin: { name: '天津', name_en: 'Tianjin', lat: 39.3434, lng: 117.3616, zoom: 10 }
         };
 
         // 使用更可靠和最新的底图服务URLs
@@ -834,8 +768,8 @@
             welcomeMsg.innerHTML = `
                 <i class="fas fa-info-circle"></i> 
                 ${currentLang === 'zh' ? 
-                '<strong>GitHub Pages演示：</strong>此版本可加载本地GeoJSON文件进行预览。请确保文件大小符合GitHub限制。' : 
-                '<strong>GitHub Pages Demo:</strong> This version can load local GeoJSON files for preview. Please ensure file sizes comply with GitHub limitations.'}
+                '<strong>演示版本：</strong>由于GitHub Pages的限制，当前显示的是示例数据。完整数据集请通过下方链接下载。' : 
+                '<strong>Demo Version:</strong> Due to GitHub Pages limitations, sample data is shown. Download the full dataset via the links below.'}
             `;
             dataInfo.insertBefore(welcomeMsg, dataInfo.firstChild);
         }
@@ -873,8 +807,8 @@
                 welcomeMsg.innerHTML = `
                     <i class="fas fa-info-circle"></i> 
                     ${currentLang === 'zh' ? 
-                    '<strong>GitHub Pages演示：</strong>此版本可加载本地GeoJSON文件进行预览。请确保文件大小符合GitHub限制。' : 
-                    '<strong>GitHub Pages Demo:</strong> This version can load local GeoJSON files for preview. Please ensure file sizes comply with GitHub limitations.'}
+                    '<strong>演示版本：</strong>由于GitHub Pages的限制，当前显示的是示例数据。完整数据集请通过下方链接下载。' : 
+                    '<strong>Demo Version:</strong> Due to GitHub Pages limitations, sample data is shown. Download the full dataset via the links below.'}
                 `;
             }
         }
@@ -995,140 +929,24 @@
             document.getElementById('loadingIndicator').style.display = 'none';
         }
 
-        async function loadCityData(cityKey) {
+        function loadCityData(cityKey) {
             showLoading();
             
             // 清除现有数据
             stopsLayer.clearLayers();
             routesLayer.clearLayers();
             
+            // 由于GitHub Pages限制，直接生成示例数据
             const city = cities[cityKey];
-            
-            try {
-                // 检查城市是否有对应的文件配置
-                if (!city.files || !city.files[currentTransport]) {
-                    console.warn(`No data files configured for ${cityKey} - ${currentTransport}`);
-                    generateFallbackData(city);
-                    updateMapLayers();
-                    updateDataAttributes(cityKey);
-                    hideLoading();
-                    return;
-                }
-
-                const transportFiles = city.files[currentTransport];
-                
-                // 加载站点数据
-                if (transportFiles.stops) {
-                    try {
-                        await loadGeoJSONFile(LOCAL_GEOJSON_PATH + transportFiles.stops, 'stops');
-                    } catch (error) {
-                        console.warn(`Failed to load stops data for ${cityKey}:`, error);
-                        generateFallbackStops(city);
-                    }
-                }
-                
-                // 加载线路数据
-                if (transportFiles.routes) {
-                    try {
-                        await loadGeoJSONFile(LOCAL_GEOJSON_PATH + transportFiles.routes, 'routes');
-                    } catch (error) {
-                        console.warn(`Failed to load routes data for ${cityKey}:`, error);
-                        generateFallbackRoutes(city);
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error loading city data:', error);
-                showError('数据加载失败，显示示例数据');
-                generateFallbackData(city);
-            }
+            generateSampleData(city);
             
             updateMapLayers();
             updateDataAttributes(cityKey);
+            
             hideLoading();
         }
 
-        async function loadGeoJSONFile(filePath, dataType) {
-            const response = await fetch(filePath);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const geojsonData = await response.json();
-            
-            if (dataType === 'stops') {
-                loadStopsData(geojsonData);
-            } else if (dataType === 'routes') {
-                loadRoutesData(geojsonData);
-            }
-        }
-
-        function loadStopsData(geojsonData) {
-            const stopsIcon = currentTransport === 'bus' ? 'fa-bus' : 'fa-subway';
-            const stopsColor = currentTransport === 'bus' ? '#ff7800' : '#0066cc';
-            
-            L.geoJSON(geojsonData, {
-                pointToLayer: function(feature, latlng) {
-                    return L.circleMarker(latlng, {
-                        radius: 6,
-                        fillColor: stopsColor,
-                        color: '#000',
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    });
-                },
-                onEachFeature: function(feature, layer) {
-                    if (feature.properties) {
-                        const props = feature.properties;
-                        let popupContent = `<strong><i class="fas ${stopsIcon}"></i> ${props.name || props.stop_name || 'Unknown Stop'}</strong><br>`;
-                        
-                        // 添加其他属性信息
-                        if (props.route_id) popupContent += `${currentLang === 'zh' ? '线路' : 'Route'}: ${props.route_id}<br>`;
-                        if (props.stop_id) popupContent += `ID: ${props.stop_id}<br>`;
-                        
-                        const coord = feature.geometry.coordinates;
-                        popupContent += `${currentLang === 'zh' ? '坐标' : 'Coordinates'}: ${coord[1].toFixed(6)}, ${coord[0].toFixed(6)}`;
-                        
-                        layer.bindPopup(popupContent);
-                    }
-                }
-            }).addTo(stopsLayer);
-        }
-
-        function loadRoutesData(geojsonData) {
-            const routeColor = currentTransport === 'bus' ? '#3388ff' : '#ff6600';
-            
-            L.geoJSON(geojsonData, {
-                style: function(feature) {
-                    return {
-                        color: routeColor,
-                        weight: 3,
-                        opacity: 0.7
-                    };
-                },
-                onEachFeature: function(feature, layer) {
-                    if (feature.properties) {
-                        const props = feature.properties;
-                        let popupContent = `<strong>${props.name || props.route_name || 'Unknown Route'}</strong><br>`;
-                        
-                        if (props.route_id) popupContent += `ID: ${props.route_id}<br>`;
-                        if (props.transport_type) popupContent += `${currentLang === 'zh' ? '类型' : 'Type'}: ${props.transport_type}`;
-                        
-                        layer.bindPopup(popupContent);
-                    }
-                }
-            }).addTo(routesLayer);
-        }
-
-        // 备用数据生成函数
-        function generateFallbackData(city) {
-            generateFallbackStops(city);
-            generateFallbackRoutes(city);
-        }
-
-        function generateFallbackStops(city) {
+        function generateSampleStops(city) {
             const stopsIcon = currentTransport === 'bus' ? 'fa-bus' : 'fa-subway';
             const stopsColor = currentTransport === 'bus' ? '#ff7800' : '#0066cc';
             
@@ -1162,7 +980,7 @@
             }
         }
 
-        function generateFallbackRoutes(city) {
+        function generateSampleRoutes(city) {
             const routeColor = currentTransport === 'bus' ? '#3388ff' : '#ff6600';
             
             for (let i = 0; i < 5; i++) {
@@ -1199,6 +1017,11 @@
                 
                 routesLayer.addLayer(polyline);
             }
+        }
+
+        function generateSampleData(city) {
+            generateSampleStops(city);
+            generateSampleRoutes(city);
         }
 
         function updateMapLayers() {
@@ -1288,21 +1111,6 @@
             </div>`;
         }
 
-        function showError(message) {
-            const dataInfo = document.getElementById('dataInfo');
-            const errorMsg = document.createElement('div');
-            errorMsg.className = 'error-message';
-            errorMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
-            dataInfo.insertBefore(errorMsg, dataInfo.firstChild);
-            
-            // 3秒后自动移除错误消息
-            setTimeout(() => {
-                if (errorMsg.parentNode) {
-                    errorMsg.parentNode.removeChild(errorMsg);
-                }
-            }, 3000);
-        }
-
         function animateStats() {
             setTimeout(() => {
                 animateNumber(document.getElementById('cityCount'), Object.keys(cities).length);
@@ -1332,3 +1140,6 @@
                 element.textContent = displayValue;
             }, 16);
         }
+    </script>
+</body>
+</html>
