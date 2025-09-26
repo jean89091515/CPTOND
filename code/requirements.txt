@@ -1,0 +1,29 @@
+# Urban Transportation Data Processing Toolkit
+# Required Python packages for data collection, processing, and analysis
+
+# Core data processing
+pandas>=1.3.0
+numpy>=1.21.0
+
+# Geospatial data processing
+geopandas>=0.10.0
+shapely>=1.8.0
+pyproj>=3.2.0
+fiona>=1.8.20
+
+# Web data collection
+requests>=2.25.0
+urllib3>=1.26.0
+beautifulsoup4>=4.9.0
+
+# Chinese text processing
+xpinyin>=0.7.6
+
+# Visualization (optional)
+matplotlib>=3.3.0
+
+# Chinese text processing (optional, enhanced features)
+pypinyin>=0.44.0
+
+# Development and testing (optional)
+pytest>=6.0.0
